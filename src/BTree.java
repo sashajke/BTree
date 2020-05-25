@@ -38,49 +38,54 @@ public class BTree<T extends Comparable<T>> {
             root = new Node<T>(null, maxKeySize, maxChildrenSize);
             root.addKey(value);
         }
-    	else
-        {
-            Node<T> node = root;
-            while (node.numberOfChildren() != 0)
+    	else {
+    	    Node<T> currentNode = root;
+    	    while (currentNode != null)
             {
-                if(node.numberOfKeys() == maxKeySize)
+                if(currentNode.numberOfKeys() >= maxKeySize)
                 {
-                    split(node);
+                    split(currentNode);
+                    currentNode = currentNode.parent;
                 }
-                for(int i=0;i<node.numberOfKeys();i++) {
-                    if (node.getKey(i).compareTo(value) < 0) {
-                        node = node.getChild(i);
+
+
+                if (currentNode.numberOfChildren() == 0) {
+                    currentNode.addKey(value);
+                    if (currentNode.numberOfKeys() < maxKeySize) {
+                        // A-OK
+                        break;
+                    }
+                    // Need to split up
+                    split(currentNode);
+                    break;
+                }
+                // Navigate
+
+                // Lesser or equal
+                T lesser = currentNode.getKey(0);
+                if (value.compareTo(lesser) <= 0) {
+                    currentNode = currentNode.getChild(0);
+                    continue;
+                }
+
+                // Greater
+                int numberOfKeys = currentNode.numberOfKeys();
+                int last = numberOfKeys - 1;
+                T greater = currentNode.getKey(last);
+                if (value.compareTo(greater) > 0) {
+                    currentNode = currentNode.getChild(numberOfKeys);
+                    continue;
+                }
+
+                // Search internal nodes
+                for (int i = 1; i < currentNode.numberOfKeys(); i++) {
+                    T prev = currentNode.getKey(i - 1);
+                    T next = currentNode.getKey(i);
+                    if (value.compareTo(prev) > 0 && value.compareTo(next) <= 0) {
+                        currentNode = currentNode.getChild(i);
                         break;
                     }
                 }
-            }
-            if(node.numberOfKeys() == maxKeySize)
-            {
-                
-                split(node);
-                node = node.parent;
-                for(int i=0;i<node.numberOfKeys();i++) {
-                    T lesser = node.getKey(0);
-                    if (value.compareTo(lesser) <= 0) {
-                        node = node.getChild(0);
-                        continue;
-                    }
-
-                    // Greater
-                    else {
-                        int numberOfKeys = node.numberOfKeys();
-                        int last = numberOfKeys - 1;
-                        T greater = node.getKey(last);
-                        if (value.compareTo(greater) > 0) {
-                            node = node.getChild(numberOfKeys);
-                            continue;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                node.addKey(value);
             }
         }
 		return true;
@@ -203,7 +208,8 @@ public class BTree<T extends Comparable<T>> {
             parent.addChild(left);
             parent.addChild(right);
 
-            if (parent.numberOfKeys() > maxKeySize) split(parent);
+            if (parent.numberOfKeys() >= maxKeySize)
+                split(parent);
         }
     }
 
