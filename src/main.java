@@ -25,8 +25,9 @@ public class main
         bTree.insert(10);
         System.out.println(bTree);
 
-        bTree.insert(11);
+        bTree.delete(6);
         System.out.println(bTree);
+
 //        bTree.add(7);
 //        bTree.add(8);
 
