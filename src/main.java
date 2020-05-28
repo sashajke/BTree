@@ -25,14 +25,15 @@ public class main
         bTree.insert(10);
         System.out.println(bTree);
 
-        bTree.delete(6);
+        bTree.delete(4);
         System.out.println(bTree);
+        bTree.delete(3);
+        System.out.println(bTree);
+        bTree.delete(2);
+        System.out.println(bTree);
+
 
 //        bTree.add(7);
 //        bTree.add(8);
-
-
-
-
     }
 }

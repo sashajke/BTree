@@ -97,15 +97,52 @@ public class BTree<T extends Comparable<T>> {
         boolean found = false;
         while (currentNode != null && !found)
         {
-            if(currentNode.indexOf(value) >= 0)
+            if(currentNode.numberOfKeys() <= minKeySize && !currentNode.equals(root))
+            // Make sure each node has at least t keys
+            {
+                combine(currentNode);
+            }
+            if(currentNode.indexOf(value) >= 0) {
                 found = true;
+                if(currentNode.numberOfChildren() != 0)
+                // internal node
+                {
+                    int deleteIndex = currentNode.indexOf(value);
+                    Node<T> lesser = currentNode.getChild(deleteIndex);
+                    Node<T> greater = currentNode.getChild(deleteIndex+1);
+                    if(lesser.numberOfKeys() > minKeySize) {
+                        Node<T> predNode = getGreatestNode(currentNode.getChild(deleteIndex));
+                        T pred = predNode.getKey(predNode.numberOfKeys() - 1);
+                        currentNode.keys[deleteIndex] = delete(pred);
+                        removedValue = value;
+                    }
+                    else if(greater.numberOfKeys() > minKeySize)
+                    {
+                        Node<T> successorNode = getLowestNode(currentNode.getChild(deleteIndex+1));
+                        T successorNodeKey = successorNode.getKey(0);
+                        currentNode.keys[deleteIndex] = delete(successorNodeKey);
+                        removedValue = value;
+                    }
+                    else
+                    {
+                        merge(lesser,greater,deleteIndex);
+                        return delete(value);
+                    }
+                }
+                else
+                    // leaf node
+                {
+                    if(currentNode.numberOfKeys() <= minKeySize)
+                    {
+                        combine(currentNode);
+                    }
+                    currentNode.removeKey(value);
+                    removedValue = value;
+                }
+            }
+
             else
             {
-                if(currentNode.numberOfKeys() <= minKeySize && !currentNode.equals(root))
-                // Make sure each node has at least t keys
-                {
-                    combine(currentNode);
-                }
                 // Navigate
 
                 // Lesser or equal
@@ -134,16 +171,32 @@ public class BTree<T extends Comparable<T>> {
                 }
             }
         }
-        removedValue = remove(value,currentNode);
+        //removedValue = remove(value,currentNode);
 		return removedValue;
     }
-    
-	//Task 2.2
+    /** 1st step : search for node containing value
+     *  2nd step : each node with less than t keys needs to merge
+     *  3rd step : after finding the node there are 4 cases
+     *  case 1 - the value is in a leaf so we just delete
+     *  case 2 - the value is in internal node:
+     * let y be the left son of the key and z the right son
+     * 1) if y has more than t-1 keys we remove predecessor
+     * 2) if y has t-1 keys and z has more we remove successor
+     * 3) if both y and z has t-1 elements we merge y,z and the value and then recursively delete the value
+     * **/
+
+    public T Delete(T value) {
+        Node<T> currentNode = root;
+        boolean found = false;
+        while (currentNode != null && !found)
+        {
+            
+        }
+    }
     public boolean insert2pass(T value) {
     	// TODO: implement your code here
 		return false;
     }
-    
     /**
      * {@inheritDoc}
      */
@@ -279,7 +332,7 @@ public class BTree<T extends Comparable<T>> {
 
         T removed = null;
         int index = node.indexOf(value);
-        removed = node.removeKey(value);
+
         if (node.numberOfChildren() == 0) {
             // leaf node
             if (node.parent != null && node.numberOfKeys() < minKeySize) {
@@ -288,17 +341,42 @@ public class BTree<T extends Comparable<T>> {
                 // Removing root node with no keys or children
                 root = null;
             }
+            removed = node.removeKey(value);
         } else {
             // internal node
             Node<T> lesser = node.getChild(index);
-            Node<T> greatest = this.getGreatestNode(lesser);
-            T replaceValue = this.removeGreatestValue(greatest);
-            node.addKey(replaceValue);
-            if (greatest.parent != null && greatest.numberOfKeys() < minKeySize) {
-                this.combine(greatest);
+            Node<T> greater = node.getChild(index+1);
+            Node<T> toReplaceNode = null;
+            T replaceValue = null;
+            if(lesser.numberOfKeys() == minKeySize && greater.numberOfKeys() > minKeySize)
+            // if the node has t-1 keys we go and find the successor
+            {
+                lesser = node.getChild(index+1);
+                toReplaceNode = this.getLowestNode(lesser);
+                replaceValue = this.removeLowestValue(toReplaceNode);
             }
-            if (greatest.numberOfChildren() > maxChildrenSize) {
-                this.split(greatest);
+            else if(lesser.numberOfKeys() > minKeySize && greater.numberOfKeys() == minKeySize)
+            {
+                toReplaceNode = this.getGreatestNode(lesser);
+                replaceValue = this.removeGreatestValue(toReplaceNode);
+            }
+            else if(lesser.numberOfKeys() == minKeySize && greater.numberOfKeys() == minKeySize)
+            {
+                // both children have t-1 keys so we need to merge them
+                merge(lesser,greater,index);
+                if(node.parent == null && node.numberOfKeys() == 0)
+                    root = node.getChild(index);
+                return remove(value,node.getChild(index));
+
+              //  remove(value,greater);
+            }
+            //removed = node.removeKey(value);
+            node.addKey(replaceValue);
+            if (toReplaceNode.parent != null && toReplaceNode.numberOfKeys() < minKeySize) {
+                this.combine(toReplaceNode);
+            }
+            if (toReplaceNode.numberOfChildren() > maxChildrenSize) {
+                this.split(toReplaceNode);
             }
         }
 
@@ -306,7 +384,26 @@ public class BTree<T extends Comparable<T>> {
 
         return removed;
     }
-
+    /** in case both first and second have t-1 children**/
+    private void merge(Node<T> first,Node<T> second,int parentIndex)
+    {
+        Node<T> newNode = new Node<>(first.parent,maxKeySize,maxChildrenSize);
+        for (int i=0;i<first.numberOfKeys();i++)
+        // first and second have t-1 keys
+        {
+            newNode.addKey(first.removeKey(i));
+            newNode.addKey(second.removeKey(i));
+            if(first.numberOfChildren() != 0) {
+                newNode.addChild(first.getChild(i));
+                newNode.addChild(second.getChild(i));
+                newNode.addChild(first.getChild(i + 1));
+                newNode.addChild(second.getChild(i + 1));
+            }
+        }
+        newNode.addKey(first.parent.removeKey(parentIndex));
+        newNode.parent.removeChild(parentIndex+1);
+        newNode.parent.children[parentIndex] = newNode;
+    }
     /**
      * Remove greatest valued key from node.
      * 
@@ -321,7 +418,14 @@ public class BTree<T extends Comparable<T>> {
         }
         return value;
     }
-
+    private T removeLowestValue(Node<T> node)
+    {
+        T value = null;
+        if (node.numberOfKeys() > 0) {
+            value = node.removeKey(0);
+        }
+        return value;
+    }
     /**
      * {@inheritDoc}
      */
@@ -404,7 +508,14 @@ public class BTree<T extends Comparable<T>> {
         }
         return node;
     }
-
+    private  Node<T> getLowestNode(Node<T> nodeToGet)
+    {
+        Node<T> node = nodeToGet;
+        while (node.numberOfChildren() > 0) {
+            node = node.getChild(0);
+        }
+        return node;
+    }
     /**
      * Combined children keys with parent when size is less than minKeySize.
      * 
