@@ -51,12 +51,12 @@ public class BTree<T extends Comparable<T>> {
 
                 if (currentNode.numberOfChildren() == 0) {
                     currentNode.addKey(value);
-                    if (currentNode.numberOfKeys() < maxKeySize) {
-                        // A-OK
-                        break;
-                    }
-                    // Need to split up
-                    split(currentNode);
+//                    if (currentNode.numberOfKeys() < maxKeySize) {
+//                        // A-OK
+//                        break;
+//                    }
+//                    // Need to split up
+//                    split(currentNode);
                     break;
                 }
                 // Navigate
@@ -91,56 +91,30 @@ public class BTree<T extends Comparable<T>> {
     	size++;
 		return true;
     }
+
+    /** 1st step : search for node containing value
+     *  2nd step : each node with less than t keys needs to merge
+     *  3rd step : after finding the node there are 4 cases
+     *  case 1 - the value is in a leaf so we just delete
+     *  case 2 - the value is in internal node:
+     * let y be the left son of the key and z the right son
+     * 1) if y has more than t-1 keys we remove predecessor
+     * 2) if y has t-1 keys and z has more we remove successor
+     * 3) if both y and z has t-1 elements we merge y,z and the value and then recursively delete the value
+     * **/
+
     public T delete(T value) {
-    	T removedValue = null;
         Node<T> currentNode = root;
         boolean found = false;
         while (currentNode != null && !found)
+        // find the node containing the value
         {
-            if(currentNode.numberOfKeys() <= minKeySize && !currentNode.equals(root))
-            // Make sure each node has at least t keys
-            {
+            if(currentNode.numberOfKeys() <= minKeySize && !currentNode.equals(root)) {
                 combine(currentNode);
             }
             if(currentNode.indexOf(value) >= 0) {
                 found = true;
-                if(currentNode.numberOfChildren() != 0)
-                // internal node
-                {
-                    int deleteIndex = currentNode.indexOf(value);
-                    Node<T> lesser = currentNode.getChild(deleteIndex);
-                    Node<T> greater = currentNode.getChild(deleteIndex+1);
-                    if(lesser.numberOfKeys() > minKeySize) {
-                        Node<T> predNode = getGreatestNode(currentNode.getChild(deleteIndex));
-                        T pred = predNode.getKey(predNode.numberOfKeys() - 1);
-                        currentNode.keys[deleteIndex] = delete(pred);
-                        removedValue = value;
-                    }
-                    else if(greater.numberOfKeys() > minKeySize)
-                    {
-                        Node<T> successorNode = getLowestNode(currentNode.getChild(deleteIndex+1));
-                        T successorNodeKey = successorNode.getKey(0);
-                        currentNode.keys[deleteIndex] = delete(successorNodeKey);
-                        removedValue = value;
-                    }
-                    else
-                    {
-                        merge(lesser,greater,deleteIndex);
-                        return delete(value);
-                    }
-                }
-                else
-                    // leaf node
-                {
-                    if(currentNode.numberOfKeys() <= minKeySize)
-                    {
-                        combine(currentNode);
-                    }
-                    currentNode.removeKey(value);
-                    removedValue = value;
-                }
             }
-
             else
             {
                 // Navigate
@@ -171,31 +145,137 @@ public class BTree<T extends Comparable<T>> {
                 }
             }
         }
-        //removedValue = remove(value,currentNode);
-		return removedValue;
-    }
-    /** 1st step : search for node containing value
-     *  2nd step : each node with less than t keys needs to merge
-     *  3rd step : after finding the node there are 4 cases
-     *  case 1 - the value is in a leaf so we just delete
-     *  case 2 - the value is in internal node:
-     * let y be the left son of the key and z the right son
-     * 1) if y has more than t-1 keys we remove predecessor
-     * 2) if y has t-1 keys and z has more we remove successor
-     * 3) if both y and z has t-1 elements we merge y,z and the value and then recursively delete the value
-     * **/
-
-    public T Delete(T value) {
-        Node<T> currentNode = root;
-        boolean found = false;
-        while (currentNode != null && !found)
+        T returnValue = null;
+        if(currentNode == null)
+        // we didn't find the node
         {
-            
+            return null;
         }
+        if(currentNode.numberOfChildren() == 0)
+        // the value is in a leaf node
+        {
+            returnValue = currentNode.removeKey(value);
+        }
+        else
+            // value is in an internal node
+        {
+            int valueIndex = currentNode.indexOf(value);
+            Node<T> leftChild = currentNode.getChild(valueIndex);
+            Node<T> rightChild = currentNode.getChild(valueIndex+1);
+            returnValue = currentNode.getKey(valueIndex);
+            if(leftChild.numberOfKeys() > minKeySize)
+            // take the predecessor
+            {
+                Node<T> predNode = getGreatestNode(leftChild);
+                T pred = predNode.getKey(predNode.numberOfKeys()-1);
+                delete(pred);
+                currentNode.keys[valueIndex] = pred;
+            }
+            else if(rightChild.numberOfKeys() > minKeySize)
+            // take the successor
+            {
+                Node<T> successNode = getLowestNode(rightChild);
+                T successor = successNode.getKey(0);
+                delete(successor);
+                currentNode.keys[valueIndex] = successor;
+            }
+            else
+                // both have t-1 keys so we need to merge
+            {
+                merge(leftChild,rightChild,valueIndex);
+                delete(value);
+            }
+
+        }
+        return returnValue;
     }
     public boolean insert2pass(T value) {
-    	// TODO: implement your code here
-		return false;
+        if(root == null) {
+            root = new Node<T>(null, maxKeySize, maxChildrenSize);
+            root.addKey(value);
+        }
+        else {
+            Node<T> currentNode = root;
+            Node<T> startSplitNode = null;
+            while (currentNode.numberOfChildren() != 0)
+            {
+                if(currentNode.numberOfKeys() <= maxKeySize-1)
+                {
+                    startSplitNode = currentNode;
+                }
+                // Navigate
+
+                // Lesser or equal
+                T lesser = currentNode.getKey(0);
+                if (value.compareTo(lesser) <= 0) {
+                    currentNode = currentNode.getChild(0);
+                    continue;
+                }
+
+                // Greater
+                int numberOfKeys = currentNode.numberOfKeys();
+                int last = numberOfKeys - 1;
+                T greater = currentNode.getKey(last);
+                if (value.compareTo(greater) > 0) {
+                    currentNode = currentNode.getChild(numberOfKeys);
+                    continue;
+                }
+
+                // Search internal nodes
+                for (int i = 1; i < currentNode.numberOfKeys(); i++) {
+                    T prev = currentNode.getKey(i - 1);
+                    T next = currentNode.getKey(i);
+                    if (value.compareTo(prev) > 0 && value.compareTo(next) <= 0) {
+                        currentNode = currentNode.getChild(i);
+                        break;
+                    }
+                }
+
+            }
+            if(currentNode.numberOfKeys() < maxKeySize)
+                currentNode.addKey(value);
+            else
+            {
+                Node<T> travelNode = currentNode;
+                while (travelNode.parent != startSplitNode)
+                {
+                    travelNode = travelNode.parent;
+                }
+                while (travelNode != null)
+                {
+                    split(travelNode);
+                    //travelNode = travelNode.parent;
+                    // Navigate
+
+                    // Lesser or equal
+                    T lesser = travelNode.getKey(0);
+                    if (value.compareTo(lesser) <= 0) {
+                        travelNode = travelNode.getChild(0);
+                        continue;
+                    }
+
+                    // Greater
+                    int numberOfKeys = travelNode.numberOfKeys();
+                    int last = numberOfKeys - 1;
+                    T greater = travelNode.getKey(last);
+                    if (value.compareTo(greater) > 0) {
+                        travelNode = travelNode.getChild(numberOfKeys);
+                        continue;
+                    }
+
+                    // Search internal nodes
+                    for (int i = 1; i < travelNode.numberOfKeys(); i++) {
+                        T prev = travelNode.getKey(i - 1);
+                        T next = travelNode.getKey(i);
+                        if (value.compareTo(prev) > 0 && value.compareTo(next) <= 0) {
+                            travelNode = travelNode.getChild(i);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+		return true;
     }
     /**
      * {@inheritDoc}
@@ -303,8 +383,8 @@ public class BTree<T extends Comparable<T>> {
             parent.addChild(left);
             parent.addChild(right);
 
-            if (parent.numberOfKeys() >= maxKeySize)
-                split(parent);
+//            if (parent.numberOfKeys() >= maxKeySize)
+//                split(parent);
         }
     }
 
@@ -403,6 +483,8 @@ public class BTree<T extends Comparable<T>> {
         newNode.addKey(first.parent.removeKey(parentIndex));
         newNode.parent.removeChild(parentIndex+1);
         newNode.parent.children[parentIndex] = newNode;
+        if(newNode.parent.numberOfKeys() == 0)
+            root = newNode;
     }
     /**
      * Remove greatest valued key from node.

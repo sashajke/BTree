@@ -1,36 +1,16 @@
 public class main
 {
     public static void main(String[] args) {
-        BTree<Integer> bTree = new BTree<>(2);
-        bTree.insert(5);
-        System.out.println(bTree);
-        bTree.insert(3);
-        System.out.println(bTree);
+        BTree<Integer> generatedTree = new BTree<Integer>(2);
+        generatedTree.insert2pass(5);
+        generatedTree.insert2pass(6);
+        generatedTree.insert2pass(7);
+        generatedTree.insert2pass(8);
+        generatedTree.insert2pass(9);
+        generatedTree.insert2pass(10);
+        generatedTree.insert2pass(11);
+        System.out.println(generatedTree);
 
-        bTree.insert(4);
-        System.out.println(bTree);
-
-        bTree.insert(6);
-        System.out.println(bTree);
-
-        bTree.insert(7);
-        System.out.println(bTree);
-
-        bTree.insert(2);
-        System.out.println(bTree);
-
-        bTree.insert(1);
-        System.out.println(bTree);
-
-        bTree.insert(10);
-        System.out.println(bTree);
-
-        bTree.delete(4);
-        System.out.println(bTree);
-        bTree.delete(3);
-        System.out.println(bTree);
-        bTree.delete(2);
-        System.out.println(bTree);
 
 
 //        bTree.add(7);
