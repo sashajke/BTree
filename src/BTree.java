@@ -241,9 +241,13 @@ public class BTree<T extends Comparable<T>> {
                 {
                     travelNode = travelNode.parent;
                 }
-                while (travelNode != null)
+                while (travelNode.numberOfChildren() != 0)
                 {
-                    split(travelNode);
+
+                    if(travelNode.numberOfKeys() >= maxKeySize) {
+                        split(travelNode);
+                        travelNode = travelNode.parent;
+                    }
                     //travelNode = travelNode.parent;
                     // Navigate
 
@@ -273,6 +277,35 @@ public class BTree<T extends Comparable<T>> {
                         }
                     }
                 }
+                split(travelNode);
+                travelNode = travelNode.parent;
+                // now we need to find the leaf to add the value so we need one navigation
+                // Navigate
+
+                // Lesser or equal
+                T lesser = travelNode.getKey(0);
+                if (value.compareTo(lesser) <= 0) {
+                    travelNode = travelNode.getChild(0);
+                }
+                else {
+                    // Greater
+                    int numberOfKeys = travelNode.numberOfKeys();
+                    int last = numberOfKeys - 1;
+                    T greater = travelNode.getKey(last);
+                    if (value.compareTo(greater) > 0) {
+                        travelNode = travelNode.getChild(numberOfKeys);
+                    } else {
+                        // Search internal nodes
+                        for (int i = 1; i < travelNode.numberOfKeys(); i++) {
+                            T prev = travelNode.getKey(i - 1);
+                            T next = travelNode.getKey(i);
+                            if (value.compareTo(prev) > 0 && value.compareTo(next) <= 0) {
+                                travelNode = travelNode.getChild(i);
+                            }
+                        }
+                    }
+                }
+                travelNode.addKey(value);
             }
         }
 		return true;

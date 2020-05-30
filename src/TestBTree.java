@@ -68,12 +68,12 @@ public class TestBTree {
         /*
         parseAll insertion in this specific case
         */
-        ArrayList<String> normalInsertion = getAllMatches(this.testStr,"generatedTree.insert.*");
+        ArrayList<String> normalInsertion = getAllMatches(this.testStr,"generatedTree.insert2pass.*");
         
         for(int i = 0 ; i < normalInsertion.size(); i++)
         {
-            String toInsert = normalInsertion.get(i).substring(21,23); 
-            this.generatedTree.insert(toInsert); 
+            String toInsert = normalInsertion.get(i).substring(26,28); 
+            this.generatedTree.insert2pass(toInsert); 
         }
         treeAfterInsert = this.generatedTree.toString().replaceAll("\\D+","");
         /*
@@ -85,14 +85,14 @@ public class TestBTree {
         for(int i = 0 ; i < normalDelete.size(); i++)
         {
             String toDelete = normalDelete.get(i).substring(21,23); 
-            this.generatedTree.delete(toDelete);
+            this.generatedTree.delete(toDelete);  
         }
         treeAfterDelete = this.generatedTree.toString().replaceAll("\\D+","");
         String logTreeAfterInsert = testStr.split("------------------------------")[2].replaceAll("\\D+","");
         String logTreeAfterDelete = testStr.split("------------------------------")[4].replaceAll("\\D+",""); 
          
-        System.out.println(logTreeAfterInsert + " <> " + treeAfterInsert);
-        System.out.println(logTreeAfterDelete + " <> "  +treeAfterDelete);
+        //System.out.println(logTreeAfterInsert + " <> " + treeAfterInsert);
+        //System.out.println(logTreeAfterDelete + " <> "  +treeAfterDelete);
         passedTest = treeAfterInsert.equals(logTreeAfterInsert) && treeAfterDelete.equals(logTreeAfterDelete);
         
         return passedTest;
@@ -134,8 +134,8 @@ public class TestBTree {
            currentNodeVal = randInt(11,99);  
            if(!nodeVals.contains(currentNodeVal)){
           
-           generatedTree.insert(currentNodeVal); 
-           actionLog.add("generatedTree.insert("+currentNodeVal+");");
+           generatedTree.insert2pass(currentNodeVal); 
+           actionLog.add("generatedTree.insert2pass("+currentNodeVal+");");
            nodeVals.add(currentNodeVal);
            }
         }  
@@ -160,7 +160,7 @@ public class TestBTree {
             System.out.println("Deleting --> " + tempVal);   
             System.out.println(generatedTree.toString());
             
-            generatedTree.delete(tempVal);
+            generatedTree.delete(tempVal); 
             actionLog.add("generatedTree.delete("+tempVal+")"); 
         }
         actionLog.add("\n" +"------------------------------");
