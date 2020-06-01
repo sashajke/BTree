@@ -104,90 +104,7 @@ public class BTree<T extends Comparable<T>> {
      * **/
 
     public T delete(T value) {
-//        Node<T> currentNode = root;
-//        boolean found = false;
-//        while (currentNode != null && !found)
-//        // find the node containing the value
-//        {
-//            if(currentNode.numberOfKeys() <= minKeySize && !currentNode.equals(root)) {
-//                combine(currentNode);
-//            }
-//            if(currentNode.indexOf(value) >= 0) {
-//                found = true;
-//            }
-//            else
-//            {
-//                // Navigate
-//
-//                // Lesser or equal
-//                T lesser = currentNode.getKey(0);
-//                if (value.compareTo(lesser) <= 0) {
-//                    currentNode = currentNode.getChild(0);
-//                    continue;
-//                }
-//
-//                // Greater
-//                int numberOfKeys = currentNode.numberOfKeys();
-//                int last = numberOfKeys - 1;
-//                T greater = currentNode.getKey(last);
-//                if (value.compareTo(greater) > 0) {
-//                    currentNode = currentNode.getChild(numberOfKeys);
-//                    continue;
-//                }
-//                // Search internal nodes
-//                for (int i = 1; i < currentNode.numberOfKeys(); i++) {
-//                    T prev = currentNode.getKey(i - 1);
-//                    T next = currentNode.getKey(i);
-//                    if (value.compareTo(prev) > 0 && value.compareTo(next) <= 0) {
-//                        currentNode = currentNode.getChild(i);
-//                        break;
-//                    }
-//                }
-//            }
-//        }
-//        T returnValue = null;
-//        if(currentNode == null)
-//        // we didn't find the node
-//        {
-//            return null;
-//        }
-//        if(currentNode.numberOfChildren() == 0)
-//        // the value is in a leaf node
-//        {
-//            returnValue = currentNode.removeKey(value);
-//        }
-//        else
-//            // value is in an internal node
-//        {
-//            int valueIndex = currentNode.indexOf(value);
-//            Node<T> leftChild = currentNode.getChild(valueIndex);
-//            Node<T> rightChild = currentNode.getChild(valueIndex+1);
-//            returnValue = currentNode.getKey(valueIndex);
-//            if(leftChild.numberOfKeys() > minKeySize)
-//            // take the predecessor
-//            {
-//                Node<T> predNode = getGreatestNode(leftChild);
-//                T pred = predNode.getKey(predNode.numberOfKeys()-1);
-//                delete(pred);
-//                currentNode.keys[valueIndex] = pred;
-//            }
-//            else if(rightChild.numberOfKeys() > minKeySize)
-//            // take the successor
-//            {
-//                Node<T> successNode = getLowestNode(rightChild);
-//                T successor = successNode.getKey(0);
-//                delete(successor);
-//                currentNode.keys[valueIndex] = successor;
-//            }
-//            else
-//                // both have t-1 keys so we need to merge
-//            {
-//                merge(leftChild,rightChild,valueIndex);
-//                delete(value);
-//            }
-//
-//        }
-//        return returnValue;
+
         return delete(value,root);
     }
     public boolean insert2pass(T value) {
@@ -417,6 +334,9 @@ public class BTree<T extends Comparable<T>> {
         if(currentNode.numberOfChildren() == 0)
         // the value is in a leaf node
         {
+            if (currentNode.parent == null && currentNode.numberOfKeys() == 0)
+                // Removing root node with no keys or children
+                root = null;
             returnValue = currentNode.removeKey(value);
         }
         else
